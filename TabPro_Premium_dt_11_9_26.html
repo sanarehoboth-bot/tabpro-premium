@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TabPro Premium - Times Tables Master</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #030509; color: #f2ede1; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .screen.pin-screen.active { display: flex; align-items: flex-start !important; justify-content: center; padding-top: 60px; }
+
+        /* PIN SCREEN - Simple */
+        .pin-screen { background: radial-gradient(ellipse at top, #0d1428 0%, #060812 55%, #030509 100%); min-height: 100vh; padding: 20px; }
+        .pin-box { background: #0f1535; border: 2px solid #00d9ff; border-radius: 16px; padding: 50px 40px; text-align: center; max-width: 400px; }
+        .pin-box h1 { font-size: 1.5rem; margin-bottom: 10px; color: #fff; }
+        .pin-box p { color: #cfd3dc; margin-bottom: 30px; font-size: 0.9rem; }
+        .pin-input { width: 100%; font-size: 1.2rem; padding: 15px; border: 2px solid #00d9ff; border-radius: 8px; background: #0a0e27; color: #00d9ff; text-align: center; letter-spacing: 10px; margin-bottom: 20px; font-weight: bold; }
+        .unlock-btn { width: 100%; padding: 14px; background: #00d9ff; color: #0a0e27; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .unlock-btn:hover { background: #00f0ff; transform: scale(1.02); }
+        .pin-error { color: #ff6b8a; font-size: 0.85rem; margin-top: 10px; }
+
+        /* DASHBOARD - CompQuest Style */
+        .dashboard-screen { background: radial-gradient(ellipse at top, #0d1428 0%, #060812 55%, #030509 100%); min-height: 100vh; padding: 30px 20px; }
+        .dashboard-header { max-width: 1200px; margin: 0 auto 30px; }
+        .subject-badge { display: inline-block; border: 1px solid #ffd700; color: #ffd700; padding: 8px 18px; border-radius: 20px; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+        .dashboard-title { font-size: clamp(1.8rem, 5vw, 2.5rem); color: #00d9ff; margin-bottom: 10px; font-weight: 700; }
+        .dashboard-sub { color: #cfd3dc; font-size: 1rem; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: #0f1535; border: 1px solid #00d9ff; border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-icon { font-size: 2rem; margin-bottom: 10px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #00d9ff; }
+        .stat-label { font-size: 0.85rem; color: #cfd3dc; margin-top: 5px; text-transform: uppercase; }
+
+        .progress-circle { background: #0f1535; border: 1px solid #00d9ff; border-radius: 12px; padding: 20px; text-align: center; max-width: 200px; margin: 0 auto 30px; }
+        .circle { width: 150px; height: 150px; border-radius: 50%; background: conic-gradient(#00d9ff 0deg, #00d9ff var(--progress), #1a1e3f var(--progress), #1a1e3f); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; }
+        .circle-text { font-size: 2rem; font-weight: 700; color: #00d9ff; }
+        .progress-label { color: #cfd3dc; font-size: 0.85rem; }
+
+        .start-btn { width: 100%; max-width: 500px; margin: 0 auto 40px; display: block; padding: 16px 40px; background: linear-gradient(90deg, #00d9ff, #0099ff); color: #0a0e27; border: none; border-radius: 25px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 217, 255, 0.5); }
+
+        .chapters-section { max-width: 1200px; margin: 0 auto; }
+        .chapters-title { font-size: 1.2rem; color: #fff; margin-bottom: 20px; text-transform: uppercase; font-weight: 700; }
+        .chapters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .chapter-card { background: #0f1535; border: 1px solid #00d9ff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .chapter-card:hover { background: #1a1e3f; border-color: #00f0ff; transform: translateY(-3px); }
+        .chapter-icon { font-size: 2rem; margin-bottom: 10px; }
+        .chapter-num { color: #00d9ff; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+        .chapter-title { color: #fff; font-size: 0.9rem; margin-top: 8px; font-weight: 700; }
+
+        /* LEARN SCREEN - DigiRead Style */
+        .learn-screen { background: radial-gradient(ellipse at top, #0d1428 0%, #060812 55%, #030509 100%); min-height: 100vh; padding: 20px; }
+        .learn-container { max-width: 1000px; margin: 0 auto; }
+        .learn-header { color: #00d9ff; margin-bottom: 30px; }
+        .learn-header h2 { font-size: 2rem; margin-bottom: 5px; }
+        .learn-header p { color: #cfd3dc; }
+
+        .flip-page { background: #0f1535; border: 2px solid #00d9ff; border-radius: 16px; padding: 40px; margin-bottom: 30px; }
+        .page-title { text-align: center; font-size: 1.5rem; color: #00d9ff; margin-bottom: 30px; font-weight: 700; }
+        .tables-display { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .table-box { }
+        .table-box h3 { color: #fff; font-size: 1.2rem; margin-bottom: 15px; border-bottom: 2px solid #00d9ff; padding-bottom: 10px; }
+        .table-box table { width: auto; border-collapse: collapse; }
+        .table-box td { padding: 6px 4px; border-bottom: 1px solid #1a1e3f; font-size: 0.95rem; text-align: left; }
+        .table-box td:first-child { color: #00d9ff; font-weight: 700; }
+        .table-box td:last-child { color: #63e6a0; font-weight: 700; padding-left: 8px; }
+
+        .page-nav { display: flex; gap: 15px; justify-content: center; align-items: center; }
+        .nav-btn { background: #00d9ff; color: #0a0e27; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .nav-btn:hover { background: #00f0ff; transform: scale(1.05); }
+        .nav-btn:disabled { background: #2a2f4f; color: #cfd3dc; cursor: not-allowed; }
+        .page-counter { color: #00d9ff; font-weight: 700; }
+
+        /* TEST SCREEN */
+        .test-screen { background: radial-gradient(ellipse at top, #0d1428 0%, #060812 55%, #030509 100%); min-height: 100vh; padding: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; }
+        .difficulty-select { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .diff-btn { padding: 15px; background: #0f1535; border: 2px solid #00d9ff; color: #00d9ff; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .diff-btn.active { background: #00d9ff; color: #0a0e27; }
+        .diff-btn:hover { border-color: #00f0ff; }
+
+        .test-card { background: #0f1535; border: 2px solid #00d9ff; border-radius: 16px; padding: 40px; text-align: center; }
+        .test-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .test-stat { background: #0a0e27; padding: 15px; border-radius: 8px; border-left: 3px solid #00d9ff; }
+        .test-stat-val { font-size: 1.8rem; color: #00d9ff; font-weight: 700; }
+        .test-stat-label { font-size: 0.75rem; color: #cfd3dc; margin-top: 5px; text-transform: uppercase; }
+        .question { font-size: 2.5rem; font-weight: 800; color: #00d9ff; margin: 30px 0; }
+        .answer-input { font-size: 1.5rem; width: 150px; padding: 12px; background: #0a0e27; border: 2px solid #00d9ff; border-radius: 8px; color: #00d9ff; text-align: center; margin: 20px 0; font-weight: 700; }
+        .feedback { font-size: 1.2rem; font-weight: 700; margin: 20px 0; min-height: 30px; }
+        .feedback.correct { color: #63e6a0; animation: bounce 0.5s; }
+        .feedback.wrong { color: #ff6b8a; animation: shake 0.5s; }
+        .check-btn { padding: 12px 40px; background: linear-gradient(90deg, #00d9ff, #0099ff); color: #0a0e27; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.3s; }
+        .check-btn:hover { transform: scale(1.05); }
+
+        .logout-btn { padding: 10px 20px; background: #2a2f4f; color: #00d9ff; border: 1px solid #00d9ff; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 30px; }
+
+        /* TOP NAV (Learn/Test/Dashboard) */
+        .top-nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .top-nav-btn { background: #0f1535; border: 1px solid #00d9ff; color: #cfd3dc; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: 0.3s; }
+        .top-nav-btn.active { background: #00d9ff; color: #0a0e27; }
+        .top-nav-btn:hover { border-color: #00f0ff; }
+
+        /* FACT MASTERY COLORS (in Learn tables) */
+        .fact-new td { color: #f2ede1; }
+        .fact-practice td { color: #ff6b8a !important; font-weight: 700; }
+        .fact-master td { color: #63e6a0 !important; font-weight: 700; }
+        .fact-icon { font-size: 0.75rem; margin-left: 6px; }
+
+        .big-feedback-icon { font-size: 3rem; display: block; margin-bottom: 5px; }
+
+        .dash-actions { display: flex; gap: 15px; max-width: 500px; margin: 0 auto 40px; flex-wrap: wrap; }
+        .dash-actions .start-btn { margin: 0; flex: 1; min-width: 200px; }
+        .test-btn-dash { background: linear-gradient(90deg, #7c2ae8, #a855f7); }
+        .tricks-btn-dash { background: linear-gradient(90deg, #ffd700, #ff9d00); color: #1a1204; }
+
+        /* TRICKS SCREEN */
+        .tricks-screen { background: radial-gradient(ellipse at top, #0d1428 0%, #060812 55%, #030509 100%); min-height: 100vh; padding: 20px; }
+        .tricks-container { max-width: 700px; margin: 0 auto; }
+        .trick-card { background: #0f1535; border: 2px solid #ffd700; border-radius: 16px; padding: 30px; margin-bottom: 25px; text-align: center; }
+        .trick-card h2 { color: #ffd700; margin-bottom: 10px; font-size: 1.5rem; }
+        .trick-card p { color: #cfd3dc; font-size: 0.9rem; margin-bottom: 25px; line-height: 1.5; }
+        .fingers-row { display: flex; justify-content: center; gap: 8px; margin: 25px 0; flex-wrap: wrap; }
+        .finger { width: 44px; height: 70px; background: #2a2f4f; border: 2px solid #00d9ff; border-radius: 20px 20px 8px 8px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 8px; cursor: pointer; transition: 0.25s; font-weight: 700; color: #cfd3dc; font-size: 0.8rem; }
+        .finger:hover { transform: translateY(-4px); }
+        .finger.tens { background: #0b5c3d; border-color: #63e6a0; color: #63e6a0; }
+        .finger.ones { background: #6b4f0a; border-color: #ffd43b; color: #ffd43b; }
+        .finger.folded { background: #1a1e29; border-color: #ff6b8a; height: 30px; color: #ff6b8a; opacity: 0.6; }
+        .trick-result { font-size: 2rem; font-weight: 800; color: #00d9ff; margin: 20px 0; min-height: 50px; }
+        .trick-hint { color: #cfd3dc; font-size: 0.85rem; opacity: 0.8; }
+        .bonus-tricks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .bonus-trick { background: #0f1535; border: 1px solid #00d9ff; border-radius: 10px; padding: 15px; }
+        .bonus-trick strong { color: #00d9ff; display: block; margin-bottom: 6px; }
+        .bonus-trick span { font-size: 0.85rem; color: #cfd3dc; }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes pop { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+
+        .confetti { position: fixed; width: 10px; height: 10px; pointer-events: none; }
+
+        @media (max-width: 768px) {
+            .tables-display { grid-template-columns: 1fr; }
+            .difficulty-select { grid-template-columns: 1fr; }
+            .question { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- DASHBOARD -->
+<div class="screen dashboard-screen active">
+    <div class="dashboard-header">
+        <div class="subject-badge">📊 Times Tables Trainer · Ages 8-12</div>
+        <h1 class="dashboard-title">Welcome to <span style="color: #00d9ff;">TabsPro</span></h1>
+        <p class="dashboard-sub">Master Times Tables 1-20</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value" id="starsEarned">0</div>
+            <div class="stat-label">Stars Earned</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-value" id="chaptersDone">0</div>
+            <div class="stat-label">Sets Done</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-value" id="chaptersLeft">10</div>
+            <div class="stat-label">Sets Left</div>
+        </div>
+    </div>
+
+    <div class="progress-circle" style="--progress: 0%;">
+        <div class="circle">
+            <div class="circle-text" id="progressPercent">0%</div>
+        </div>
+        <div class="progress-label">Overall Progress</div>
+    </div>
+
+    <div class="dash-actions">
+        <button class="start-btn" onclick="goToDashboard()">📖 Start Learning</button>
+        <button class="start-btn test-btn-dash" onclick="showTest()">🧪 Test Yourself</button>
+        <button class="start-btn tricks-btn-dash" onclick="showTricks()">✋ Easy Tricks</button>
+    </div>
+
+    <div class="chapters-section">
+        <div class="chapters-title">📚 All Tables</div>
+        <div class="chapters-grid" id="chaptersGrid"></div>
+    </div>
+</div>
+
+<!-- LEARN SCREEN -->
+<div class="screen learn-screen">
+    <div class="learn-container">
+        <div class="top-nav">
+            <button class="top-nav-btn" id="navDash" onclick="goHome()">🏠 Dashboard</button>
+            <button class="top-nav-btn active" id="navLearn" onclick="showLearn()">📖 Learn</button>
+            <button class="top-nav-btn" id="navTest" onclick="showTest()">🧪 Test</button>
+            <button class="top-nav-btn" id="navTricks" onclick="showTricks()">✋ Tricks</button>
+        </div>
+        <div class="learn-header">
+            <h2>📖 Tables <span id="chapterNum">1 & 2</span></h2>
+            <p>Master Times Tables Together</p>
+        </div>
+
+        <div class="flip-page">
+            <div class="page-title">Tables <span id="table1">1</span> & <span id="table2">2</span></div>
+            <div class="tables-display">
+                <div class="table-box">
+                    <h3>Table of <span id="t1Num">1</span></h3>
+                    <table id="table1Display"></table>
+                </div>
+                <div class="table-box">
+                    <h3>Table of <span id="t2Num">2</span></h3>
+                    <table id="table2Display"></table>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-nav">
+            <button class="nav-btn" id="prevBtn" onclick="prevChapter()">← Previous</button>
+            <span class="page-counter"><span id="currentChap">1</span> / 10</span>
+            <button class="nav-btn" id="nextBtn" onclick="nextChapter()">Next →</button>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Back to Dashboard</button>
+    </div>
+</div>
+
+<!-- TEST SCREEN -->
+<div class="screen test-screen">
+    <div class="test-container">
+        <div class="top-nav">
+            <button class="top-nav-btn" id="navDash2" onclick="goHome()">🏠 Dashboard</button>
+            <button class="top-nav-btn" id="navLearn2" onclick="showLearn()">📖 Learn</button>
+            <button class="top-nav-btn active" id="navTest2" onclick="showTest()">🧪 Test</button>
+            <button class="top-nav-btn" id="navTricks2" onclick="showTricks()">✋ Tricks</button>
+        </div>
+        <h2 style="color: #00d9ff; margin-bottom: 20px;">🧪 Test Yourself</h2>
+        
+        <div id="testActive">
+            <div class="difficulty-select">
+                <button class="diff-btn active" onclick="setDifficulty('easy', this)">🟢 Easy<br>Tables 1-5</button>
+                <button class="diff-btn" onclick="setDifficulty('inter', this)">🟡 Intermediate<br>Tables 1-10</button>
+                <button class="diff-btn" onclick="setDifficulty('adv', this)">🔴 Advanced<br>Tables 1-20</button>
+            </div>
+
+            <div class="test-card">
+                <div class="test-stats">
+                    <div class="test-stat">
+                        <div class="test-stat-label">Question</div>
+                        <div class="test-stat-val" id="qNum">1 / 10</div>
+                    </div>
+                    <div class="test-stat">
+                        <div class="test-stat-label">Correct</div>
+                        <div class="test-stat-val" id="cNum">0</div>
+                    </div>
+                    <div class="test-stat">
+                        <div class="test-stat-label">Time</div>
+                        <div class="test-stat-val" id="timeNum">0s</div>
+                    </div>
+                </div>
+
+                <div class="question" id="question">2 × 3 = ?</div>
+                <input type="number" class="answer-input" id="ansInput" autofocus>
+                <div class="feedback" id="feedback"><span class="big-feedback-icon" id="feedbackIcon"></span><span id="feedbackText"></span></div>
+                <button class="check-btn" onclick="checkAnswer()">Check Answer</button>
+            </div>
+        </div>
+
+        <div class="test-card" id="testSummary" style="display:none;">
+            <h2 id="summaryTitle" style="color:#00d9ff; margin-bottom: 15px;"></h2>
+            <p id="summaryText" style="color:#cfd3dc; margin-bottom: 20px;"></p>
+            <div class="bonus-tricks" id="summaryFactsList"></div>
+            <div style="margin-top: 25px;">
+                <button class="check-btn" onclick="practiceWeakFacts()">📖 Practice These Tables</button>
+                <button class="check-btn" style="background: linear-gradient(90deg, #7c2ae8, #a855f7); margin-left: 10px;" onclick="retakeTest()">🔁 Retake Test</button>
+            </div>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Back to Dashboard</button>
+    </div>
+</div>
+
+<!-- TRICKS SCREEN -->
+<div class="screen tricks-screen">
+    <div class="tricks-container">
+        <div class="top-nav">
+            <button class="top-nav-btn" id="navDash3" onclick="goHome()">🏠 Dashboard</button>
+            <button class="top-nav-btn" id="navLearn3" onclick="showLearn()">📖 Learn</button>
+            <button class="top-nav-btn" id="navTest3" onclick="showTest()">🧪 Test</button>
+            <button class="top-nav-btn active" id="navTricks3" onclick="showTricks()">✋ Tricks</button>
+        </div>
+
+        <div class="trick-card">
+            <h2>✋ The 9 Times Table Finger Trick</h2>
+            <p>Hold up both hands, fingers spread. Number them 1 to 10, left to right.<br>
+            To find <b>9 × n</b>, tap finger number <b>n</b> below — that finger "bends down."<br>
+            Fingers to its <span style="color:#63e6a0;">left = TENS digit</span>, fingers to its <span style="color:#ffd43b;">right = ONES digit</span>.</p>
+
+            <div class="fingers-row" id="fingersRow"></div>
+
+            <div class="trick-result" id="trickResult">Tap a finger to try it!</div>
+            <div class="trick-hint" id="trickHint">Example: tap finger 4 → 3 fingers left (30) + 6 fingers right (6) = 9 × 4 = 36</div>
+        </div>
+
+        <div class="trick-card">
+            <h2 style="font-size: 1.1rem;">⚡ More Quick Tricks</h2>
+            <div class="bonus-tricks">
+                <div class="bonus-trick"><strong>Table of 2</strong><span>Just double the number! 2×6 = 6+6 = 12</span></div>
+                <div class="bonus-trick"><strong>Table of 5</strong><span>Always ends in 0 or 5. Count by 5s: 5,10,15,20...</span></div>
+                <div class="bonus-trick"><strong>Table of 10</strong><span>Just add a 0 at the end! 10×7 = 70</span></div>
+                <div class="bonus-trick"><strong>Table of 11 (1-9)</strong><span>Repeat the digit! 11×4 = 44, 11×7 = 77</span></div>
+            </div>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Back to Dashboard</button>
+    </div>
+</div>
+
+<script>
+let currentChapter = 0;
+let difficulty = 'easy';
+let test = null;
+
+function switchScreen(screenClass) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelector('.' + screenClass).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+// ===== MASTERY TRACKING =====
+let STATS = JSON.parse(localStorage.getItem('tabspro_mastery') || '{}');
+
+function saveStats() {
+    localStorage.setItem('tabspro_mastery', JSON.stringify(STATS));
+}
+
+function factKey(t, m) {
+    return t + 'x' + m;
+}
+
+function getFactStatus(t, m) {
+    let s = STATS[factKey(t, m)];
+    if (!s) return 'new';
+    if (s.streak >= 2) return 'master';
+    return 'practice';
+}
+
+function recordAnswer(t, m, isCorrect) {
+    let key = factKey(t, m);
+    if (!STATS[key]) STATS[key] = { streak: 0, attempts: 0 };
+    STATS[key].attempts++;
+    if (isCorrect) {
+        STATS[key].streak++;
+    } else {
+        STATS[key].streak = 0;
+    }
+    saveStats();
+}
+
+function getTableMasteryCount(t, maxM) {
+    let count = 0;
+    for (let m = 1; m <= maxM; m++) {
+        if (getFactStatus(t, m) === 'master') count++;
+    }
+    return count;
+}
+
+function isTableFullyMastered(t) {
+    return getTableMasteryCount(t, 10) === 10;
+}
+
+function updateDashboard() {
+    let totalMastered = 0;
+    let chaptersDone = 0;
+    for (let i = 1; i <= 10; i++) {
+        let t1 = i * 2 - 1;
+        let t2 = i * 2;
+        totalMastered += getTableMasteryCount(t1, 10);
+        totalMastered += getTableMasteryCount(t2, 10);
+        if (isTableFullyMastered(t1) && isTableFullyMastered(t2)) chaptersDone++;
+    }
+    document.getElementById('starsEarned').textContent = totalMastered;
+    document.getElementById('chaptersDone').textContent = chaptersDone;
+    document.getElementById('chaptersLeft').textContent = 10 - chaptersDone;
+    let prog = Math.round((totalMastered / 200) * 100);
+    document.querySelector('.progress-circle').style.setProperty('--progress', (prog * 3.6) + 'deg');
+    document.getElementById('progressPercent').textContent = prog + '%';
+    
+    let html = '';
+    for(let i = 1; i <= 10; i++) {
+        let t1 = i*2-1, t2 = i*2;
+        let done = isTableFullyMastered(t1) && isTableFullyMastered(t2);
+        html += '<div class="chapter-card" onclick="goToLearn('+i+')"><div class="chapter-icon">'+(done ? '⭐' : '📖')+'</div><div class="chapter-title">Tables '+t1+' & '+t2+'</div></div>';
+    }
+    document.getElementById('chaptersGrid').innerHTML = html;
+}
+
+function goToDashboard() {
+    currentChapter = 0;
+    showLearn();
+}
+
+function goToLearn(ch) {
+    currentChapter = ch - 1;
+    showLearn();
+}
+
+function setActiveNav(screen) {
+    document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
+    if (screen === 'dashboard') { document.getElementById('navDash') && document.getElementById('navDash').classList.add('active'); document.getElementById('navDash2') && document.getElementById('navDash2').classList.add('active'); document.getElementById('navDash3') && document.getElementById('navDash3').classList.add('active'); }
+    if (screen === 'learn') { document.getElementById('navLearn') && document.getElementById('navLearn').classList.add('active'); document.getElementById('navLearn2') && document.getElementById('navLearn2').classList.add('active'); document.getElementById('navLearn3') && document.getElementById('navLearn3').classList.add('active'); }
+    if (screen === 'test') { document.getElementById('navTest') && document.getElementById('navTest').classList.add('active'); document.getElementById('navTest2') && document.getElementById('navTest2').classList.add('active'); document.getElementById('navTest3') && document.getElementById('navTest3').classList.add('active'); }
+    if (screen === 'tricks') { document.getElementById('navTricks') && document.getElementById('navTricks').classList.add('active'); document.getElementById('navTricks2') && document.getElementById('navTricks2').classList.add('active'); document.getElementById('navTricks3') && document.getElementById('navTricks3').classList.add('active'); }
+}
+
+function showTricks() {
+    switchScreen('tricks-screen');
+    setActiveNav('tricks');
+    renderFingers();
+}
+
+function renderFingers() {
+    let html = '';
+    for (let i = 1; i <= 10; i++) {
+        html += '<div class="finger" id="finger'+i+'" onclick="tapFinger('+i+')">'+i+'</div>';
+    }
+    document.getElementById('fingersRow').innerHTML = html;
+    document.getElementById('trickResult').textContent = 'Tap a finger to try it!';
+    document.getElementById('trickHint').textContent = 'Example: tap finger 4 → 3 fingers left (30) + 6 fingers right (6) = 9 × 4 = 36';
+}
+
+function tapFinger(n) {
+    for (let i = 1; i <= 10; i++) {
+        let f = document.getElementById('finger'+i);
+        f.className = 'finger';
+        if (i === n) f.classList.add('folded');
+        else if (i < n) f.classList.add('tens');
+        else f.classList.add('ones');
+    }
+    let tens = n - 1;
+    let ones = 10 - n;
+    document.getElementById('trickResult').textContent = '9 × ' + n + ' = ' + tens + ones;
+    document.getElementById('trickHint').textContent = tens + ' finger(s) left = ' + tens + '0, plus ' + ones + ' finger(s) right = ' + ones + '. Answer: ' + (tens*10+ones);
+}
+
+function goHome() {
+    switchScreen('dashboard-screen');
+    setActiveNav('dashboard');
+    updateDashboard();
+}
+
+function factRow(t, m) {
+    let status = getFactStatus(t, m);
+    let cls = status === 'master' ? 'fact-master' : status === 'practice' ? 'fact-practice' : 'fact-new';
+    let icon = status === 'master' ? '⭐' : status === 'practice' ? '⚠️' : '';
+    return '<tr class="'+cls+'"><td>'+t+'×'+m+'</td><td>=</td><td>'+(t*m)+'<span class="fact-icon">'+icon+'</span></td></tr>';
+}
+
+function showLearn() {
+    let t1 = currentChapter * 2 + 1;
+    let t2 = currentChapter * 2 + 2;
+    if(t2 > 20) t2 = 20;
+    
+    document.getElementById('chapterNum').textContent = t1 + ' & ' + t2;
+    document.getElementById('table1').textContent = t1;
+    document.getElementById('table2').textContent = t2;
+    document.getElementById('t1Num').textContent = t1;
+    document.getElementById('t2Num').textContent = t2;
+    document.getElementById('currentChap').textContent = currentChapter + 1;
+    
+    let html1 = '', html2 = '';
+    for(let m = 1; m <= 10; m++) {
+        html1 += factRow(t1, m);
+        html2 += factRow(t2, m);
+    }
+    document.getElementById('table1Display').innerHTML = html1;
+    document.getElementById('table2Display').innerHTML = html2;
+    
+    document.getElementById('prevBtn').disabled = currentChapter === 0;
+    document.getElementById('nextBtn').disabled = currentChapter === 9;
+    
+    switchScreen('learn-screen');
+    setActiveNav('learn');
+}
+
+function prevChapter() { if(currentChapter > 0) { currentChapter--; showLearn(); } }
+function nextChapter() { if(currentChapter < 9) { currentChapter++; showLearn(); } }
+
+function setDifficulty(d, btn) {
+    difficulty = d;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    test = null;
+    showTest();
+}
+
+const TEST_LENGTH = 10;
+
+function showTest() {
+    document.getElementById('testSummary').style.display = 'none';
+    document.getElementById('testActive').style.display = 'block';
+
+    if(!test) {
+        test = {q: nextTestQuestion(), asked: 0, correct: 0, wrongFacts: [], start: Date.now()};
+    }
+    
+    let tm = Math.floor((Date.now() - test.start) / 1000);
+    document.getElementById('qNum').textContent = (test.asked + 1) + ' / ' + TEST_LENGTH;
+    document.getElementById('cNum').textContent = test.correct;
+    document.getElementById('timeNum').textContent = tm + 's';
+    document.getElementById('question').textContent = test.q.t + ' × ' + test.q.m + ' = ?';
+    document.getElementById('ansInput').value = '';
+    document.getElementById('feedbackIcon').textContent = '';
+    document.getElementById('feedbackText').textContent = '';
+    document.getElementById('feedback').className = 'feedback';
+    
+    switchScreen('test-screen');
+    setActiveNav('test');
+    document.getElementById('ansInput').focus();
+}
+
+function nextTestQuestion() {
+    let maxT = difficulty === 'easy' ? 5 : difficulty === 'adv' ? 20 : 10;
+    let t = Math.floor(Math.random()*maxT) + 1;
+    let m = Math.floor(Math.random()*10) + 1;
+    return { t, m, ans: t*m };
+}
+
+function checkAnswer() {
+    let val = parseInt(document.getElementById('ansInput').value, 10);
+    let icon = document.getElementById('feedbackIcon');
+    let txt = document.getElementById('feedbackText');
+    let fb = document.getElementById('feedback');
+    let isCorrect = val === test.q.ans;
+    
+    recordAnswer(test.q.t, test.q.m, isCorrect);
+    
+    if(isCorrect) {
+        icon.textContent = '✅';
+        txt.textContent = 'Correct!';
+        fb.className = 'feedback correct';
+        test.correct++;
+        playSound();
+        createConfetti();
+    } else {
+        icon.textContent = '❌';
+        txt.textContent = 'Wrong! Answer: ' + test.q.ans;
+        fb.className = 'feedback wrong';
+        let key = test.q.t + 'x' + test.q.m;
+        if (!test.wrongFacts.some(f => (f.t+'x'+f.m) === key)) {
+            test.wrongFacts.push({ t: test.q.t, m: test.q.m });
+        }
+    }
+
+    document.getElementById('ansInput').disabled = true;
+    setTimeout(() => {
+        document.getElementById('ansInput').disabled = false;
+        advanceTest();
+    }, 1200);
+}
+
+function advanceTest() {
+    test.asked++;
+    if (test.asked >= TEST_LENGTH) {
+        showTestSummary();
+        return;
+    }
+    test.q = nextTestQuestion();
+    showTest();
+}
+
+let lastWrongFacts = [];
+
+function showTestSummary() {
+    lastWrongFacts = test.wrongFacts.slice();
+    document.getElementById('testActive').style.display = 'none';
+    let summary = document.getElementById('testSummary');
+    summary.style.display = 'block';
+
+    let title = document.getElementById('summaryTitle');
+    let text = document.getElementById('summaryText');
+    let list = document.getElementById('summaryFactsList');
+
+    text.textContent = 'You got ' + test.correct + ' / ' + TEST_LENGTH + ' correct.';
+
+    if (lastWrongFacts.length === 0) {
+        title.textContent = '🌟 Perfect Score!';
+        list.innerHTML = '<div class="bonus-trick" style="border-color:#63e6a0;"><strong style="color:#63e6a0;">Everything mastered!</strong><span>Every question in this test was correct. Try a harder difficulty next!</span></div>';
+        createConfetti();
+    } else {
+        title.textContent = '📊 Test Complete — Here\'s what to practice:';
+        let html = '';
+        for (let f of lastWrongFacts) {
+            html += '<div class="bonus-trick" style="border-color:#ff6b8a;"><strong style="color:#ff6b8a;">'+f.t+' × '+f.m+' = '+(f.t*f.m)+'</strong><span>Needs more practice</span></div>';
+        }
+        list.innerHTML = html;
+    }
+}
+
+function practiceWeakFacts() {
+    if (lastWrongFacts.length > 0) {
+        currentChapter = Math.floor((lastWrongFacts[0].t - 1) / 2);
+    }
+    showLearn();
+}
+
+function retakeTest() {
+    test = null;
+    showTest();
+}
+
+function createConfetti() {
+    for(let i = 0; i < 30; i++) {
+        let conf = document.createElement('div');
+        conf.className = 'confetti';
+        conf.style.left = Math.random() * 100 + '%';
+        conf.style.top = '-10px';
+        conf.style.background = ['#00d9ff','#00f0ff','#63e6a0','#ffd700'][Math.floor(Math.random()*4)];
+        document.body.appendChild(conf);
+        conf.animate([{transform:'translateY(0) rotate(0deg)', opacity:1},{transform:'translateY(100vh) rotate(360deg)', opacity:0}], {duration:2000}).onfinish = () => conf.remove();
+    }
+}
+
+function playSound() {
+    let ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 800;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+}
+
+function logout() {
+    goHome();
+}
+
+// Dashboard is now the entry screen (PIN removed) — populate it on load
+updateDashboard();
+</script>
+</body>
+</html>

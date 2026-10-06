@@ -280,6 +280,15 @@
     });
   }
   btn.addEventListener('click', submit);
+  // Opened from the Gift page: key arrives as #k=KEY. Fill it, remove it from the address bar, unlock.
+  try {
+    var hm = /[#&]k=([^&]+)/.exec(window.location.hash || '');
+    if (hm) {
+      inp.value = decodeURIComponent(hm[1]);
+      try { window.history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) {}
+      setTimeout(submit, 60);
+    }
+  } catch (e) {}
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); submit(); } });
 })();
 </script>

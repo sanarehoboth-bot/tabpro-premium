@@ -58,14 +58,16 @@ textarea{width:100%;box-sizing:border-box;height:120px;font:12px monospace}
     add(navigator.onLine?'ok':'warn','Internet',navigator.onLine?'Online.':'Offline right now.');
     if(navigator.onLine){
       var x=new XMLHttpRequest();
-      x.open('POST','/api/verify',true);x.setRequestHeader('Content-Type','application/json');x.timeout=15000;
+      x.open('GET','/api/verify',true);x.timeout=15000;
       x.onload=function(){var r=null;try{r=JSON.parse(x.responseText);}catch(e){}
-        if(r&&r.code==='config')add('bad','Key check service','Site is missing GUMROAD_PRODUCT_IDS in Vercel.');
-        else if(r&&(r.code==='invalid'||r.code==='upstream'))add('ok','Key check service','Reachable (test key correctly rejected).');
-        else add('bad','Key check service','Unexpected reply: '+x.status);
+        if(r&&r.ok){
+          var n=r.products||0;
+          if(n===0&&!r.testMode)add('bad','Key check service','Reachable, but NO product ID is set (or Vercel was not redeployed after you added it).');
+          else add('ok','Key check service','Reachable. Product IDs set: '+n+'. Test mode: '+(r.testMode?'ON':'off')+'.');
+        } else add('bad','Key check service','Not working yet (api/verify.js missing or not deployed). Status '+x.status);
         finish();};
       x.onerror=x.ontimeout=function(){add('bad','Key check service','Could not reach /api/verify');finish();};
-      x.send(JSON.stringify({key:'TEST',isNewDevice:false}));
+      x.send();
     } else finish();
     var first=null;try{first=localStorage.getItem('wj_check_saved');}catch(e){}
     var o=document.getElementById('off');

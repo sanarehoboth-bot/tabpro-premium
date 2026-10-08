@@ -1,6 +1,7 @@
 'use strict';
 var API = 'https://api.gumroad.com/v2/licenses/verify';
-var CONFIG = { PRODUCT_IDS: 'GIFT_PRODUCT_ID_TO_BE_CREATED:15', TEST_KEYS: '' };
+
+var CONFIG = { PRODUCT_IDS: 'JBxm61TbS3NKHbz_z_ipiw==:15', TEST_KEYS: 'GIFT-TEST-7Q2K' };
 
 function send(res, status, obj) {
   res.statusCode = status;
@@ -12,6 +13,19 @@ function send(res, status, obj) {
 function normalize(k) {
   return String(k || '').toUpperCase().replace(/\s+/g, '')
     .replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-F-]/g, '');
+}
+
+function variants(id) {
+  var swaps = { '1': '1lI', 'l': '1lI', 'I': '1lI', '0': '0O', 'O': '0O' };
+  var out = [id], i, j, opts;
+  for (i = 0; i < id.length; i++) {
+    opts = swaps[id.charAt(i)];
+    if (!opts) continue;
+    for (j = 0; j < opts.length; j++) {
+      if (opts.charAt(j) !== id.charAt(i)) out.push(id.slice(0, i) + opts.charAt(j) + id.slice(i + 1));
+    }
+  }
+  return out;
 }
 
 function callGumroad(productId, key, increment) {
@@ -56,9 +70,12 @@ module.exports = function (req, res) {
   var key = normalize(body.key);
   if (key.length < 20) return send(res, 200, { ok: false, code: 'invalid' });
 
+  var list = [];
+  ids.forEach(function (e) { variants(e.id).forEach(function (v) { list.push({ id: v, cap: e.cap }); }); });
+
   function tryId(i) {
-    if (i >= ids.length) return send(res, 200, { ok: false, code: 'invalid' });
-    return callGumroad(ids[i].id, key, false).then(function (r) {
+    if (i >= list.length) return send(res, 200, { ok: false, code: 'invalid' });
+    return callGumroad(list[i].id, key, false).then(function (r) {
       if (r.status === 404 || (r.data && r.data.success === false && r.status < 500)) return tryId(i + 1);
       if (r.status !== 200 || !r.data || r.data.success !== true) return send(res, 502, { ok: false, code: 'upstream' });
       var p = r.data.purchase || {};
@@ -67,8 +84,8 @@ module.exports = function (req, res) {
       }
       var uses = parseInt(r.data.uses || 0, 10) || 0;
       if (body.isNewDevice === true && body.deviceId) {
-        if (ids[i].cap > 0 && uses >= ids[i].cap) return send(res, 200, { ok: false, code: 'limit' });
-        return callGumroad(ids[i].id, key, true).then(function () {
+        if (list[i].cap > 0 && uses >= list[i].cap) return send(res, 200, { ok: false, code: 'limit' });
+        return callGumroad(list[i].id, key, true).then(function () {
           return send(res, 200, { ok: true, key: key });
         });
       }
